@@ -1,11 +1,18 @@
-from flask import Flask, render_template, request, redirect, g, url_for
-import cs50
+from flask import Flask, render_template, request, redirect, g, url_for, session
+from cs50 import SQL
 from functools import wraps
-
+from flask_session import Session
+import os
+import requests
+import urllib.parse
 
 app = Flask(__name__)
 
+app.config["TEMPLATES_AUTO_RELOAD"] = True
+
 db = SQL("sqlite:///finance.db")
+
+Session(app)
 
 @app.after_request
 def after_request(response):
@@ -13,6 +20,15 @@ def after_request(response):
     response.headers["Expires"] = 0
     response.headers["Pragma"] = "no-cache"
     return response
+
+def apology(message, code=400):
+    """Render message as an apology to user."""
+    def escape(s):
+        for old, new in [("-", "--"), (" ", "-"), ("_", "__"), ("?", "~q"),
+                        ("%", "~p"), ("#", "~h"), ("/", "~s"), ("\"", "''")]:
+            s = s.replace(old, new)
+        return s
+    return render_template("apology.html", top=code, bottom=escape(message)), code
 
 def login_required(f):
     @wraps(f)
@@ -25,76 +41,64 @@ def login_required(f):
 @app.route('/')
 @login_required
 def homepage():
-    positions = database.get_open_positions()
-    return render_template('homepage.html', positions=positions)
+    positions = 0
+    #return render_template('homepage.html', positions=positions)
 
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
     """Log user in"""
 
-    # Forget any user_id
     session.clear()
-
-    # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
 
-        # Ensure username was submitted
         if not request.form.get("username"):
             return apology("must provide username", 400)
 
-        # Ensure password was submitted
         elif not request.form.get("password"):
             return apology("must provide password", 400)
 
-        # Query database for username
-        rows = db.execute("SELECT * FROM users WHERE username = :username",
-                          username=request.form.get("username"))
+        rows = db.execute("SELECT * FROM users WHERE username = ?", request.form.get("username"))
 
-        # Ensure username exists and password is correct
-        if len(rows) != 1 or not check_password_hash(rows[0]["hash"], request.form.get("password")):
+        if len(rows) != 1 or not (rows[0]["password"] ==  request.form.get("password")):
             return apology("invalid username and/or password", 400)
 
-        # Remember which user has logged in
         session["user_id"] = rows[0]["id"]
-
-        # Redirect user to home page
         return redirect("/")
 
-    # User reached route via GET (as by clicking a link or via redirect)
     else:
         return render_template("login.html")
 
 
 @app.route("/logout")
 def logout():
-    """Log user out"""
 
-    # Forget any user_id
     session.clear()
 
-    # Redirect user to login form
     return redirect("/")
 
 @app.route('/position/<int:id>')
+@login_required
 def position_details(id):
-    position = db.execute("SELECT * FROM positions")
-    return render_template('position_details.html', position=position)
+    position_data = db.execute("SELECT * FROM positions WHERE id = ?", id)
+    return render_template('position_details.html', position=position_data)
 
 @app.route('/apply/<int:id>')
+@login_required
 def apply(id):
-    return render_template('apply.html', position_id=id)
+    position_data = db.execute("SELECT * FROM positions WHERE id = ?", id)
+    return render_template('apply.html', position_data= position_data)
 
 @app.route('/apply/<int:id>', methods=['POST'])
+@login_required
 def submit_application(id):
-    form_data = request.form
-    if database.validate_application(form_data):
-        database.submit_application(id, form_data)
-        return render_template('confirmation.html', position_id=id)
-    else:
-        return render_template('apply.html', position_id=id, error='Invalid form data')
+    resume = request.form("resume")
+    misc = request.form("misc")
+    db.execute("INSERT INTO data (user_id, positions_id, resume, misc) VALUES (?, ?, ?, ?)", session["user_id"], id, resume, misc)
+    return render_template('success.html', position_id=id)
 
 @app.route('/applied')
+@login_required
 def applied():
-    applied_positions = database.get_applied_positions()
+    applied_positions = db.execute("SELECT * FROM data WHERE user_id = ?", session["user_id"])
     return render_template('applied.html', positions=applied_positions)

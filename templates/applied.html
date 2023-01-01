@@ -1,0 +1,28 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Index
+{% endblock %}
+
+{% block main %}
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th scope="col">user_id</th>
+                <th scope="col">positions_id</th>
+                <th scope="col">resume</th>
+                <th scope="col">misc</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for position in positions %}
+                <tr>
+                    <td>{{position['user_id']}}</td>
+                    <td>{{position['positions_id']}}</td>
+                    <td>{{position['resume']}}</td>
+                    <td>{{position['misc']}}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
