@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Job application
+{% endblock %}
+
+{% block main %}
+    <form action="/buy" method="post">
+        <div class="form-group">
+            <input class="form-control" name="resume" placeholder="A link to your resume" type="text">
+        </div>
+        <div class="form-group">
+            <input class="form-control" name="misc" placeholder="Why do you want this job?" type="text">
+        </div>
+        <button class="btn btn-primary" type="submit">Buy</button>
+    </form>
+
+{% endblock %}

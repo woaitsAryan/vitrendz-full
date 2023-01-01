@@ -41,13 +41,12 @@ def login_required(f):
 @app.route('/')
 @login_required
 def homepage():
-    positions = 0
-    #return render_template('homepage.html', positions=positions)
+    positions = db.execute("SELECT * FROM positions WHERE id = ?", id)
+    return render_template('homepage.html', positions=positions)
 
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    """Log user in"""
 
     session.clear()
     if request.method == "POST":
@@ -77,11 +76,11 @@ def logout():
 
     return redirect("/")
 
-@app.route('/position/<int:id>')
-@login_required
-def position_details(id):
-    position_data = db.execute("SELECT * FROM positions WHERE id = ?", id)
-    return render_template('position_details.html', position=position_data)
+#@app.route('/position/<int:id>')
+#@login_required
+#def position_details(id):
+#    position_data = db.execute("SELECT * FROM positions WHERE id = ?", id)
+#    return render_template('position_details.html', position=position_data)
 
 @app.route('/apply/<int:id>')
 @login_required

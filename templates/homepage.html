@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1 class = "pad" >{% block title %} Welcome to VITBlog {% endblock %}</h1>
+    {% for position in positions %}
+        <a href="{{}}">
+            <h2>{{ position['title'] }}</h2>
+        </a>
+        <div>
+            {{position['description']}}
+        </div>
+        <div>
+            {{position['requirements']}}
+        </div>
+        <hr>
+    {% endfor %}
+{% endblock %}
